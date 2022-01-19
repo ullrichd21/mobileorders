@@ -1,0 +1,45 @@
+* {
+  font-family: Roboto;
+  font-size: 12px;
+  font-weight: Normal;
+  background-color: #ffffff;
+}
+
+/*-----QWidget-----*/
+QWidget
+{
+    color: #000000;
+}
+
+/*-----QLabel-----*/
+QLabel
+{
+	background-color: transparent;
+	color: #000000;
+
+}
+
+/*-----QLineEdit-----*/
+QLineEdit
+{
+	background-color: #fff;
+	color: #000;
+	selection-color: #fff;
+	selection-background-color: #507098;
+}
+
+/*-----QPlainTextEdit-----*/
+QPlainTextEdit
+{
+	background-color: #fff;
+	color: #000;
+	selection-color: #fff;
+	selection-background-color: #507098;
+}
+
+/*-----QPushButton-----*/
+QPushButton
+{
+  background-color: #fff;
+	color: #000000;
+}
