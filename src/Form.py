@@ -9,7 +9,7 @@ from PyQt5.QtMultimediaWidgets import *
 import time
 
 from cwidgets import CPushButton
-import tools
+from tools import *
 
 
 class OrderForm(QWidget):
@@ -209,7 +209,7 @@ class OrderDetailsForm(QWidget):
         timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
 
         self.capture = QCameraImageCapture(self.camera)
-        self.capture.capture(tools.resource_path("./photos/" + timestamp + ".jpg"))
+        self.capture.capture(resource_path("./photos/" + timestamp + ".jpg"))
 
     def submit_order_data(self):
         self.parentWidget().parentWidget().order_data = {"item": self.item_input.currentText(),
@@ -273,8 +273,8 @@ class CustomerForm(QWidget):
 
         self.address_zip_input.setValidator(self.regEx)
 
-        with open(tools.resource_path("./data/states.txt")) as states, open(
-                tools.resource_path("./data/countries.txt")) as countries:
+        with open(resource_path("./data/states.txt")) as states, open(
+                resource_path("./data/countries.txt")) as countries:
             self.address_state_input.addItems(states.readlines())
             self.address_country_input.addItems(countries.readlines())
 
