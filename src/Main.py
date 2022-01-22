@@ -5,6 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from Homepage import Homepage
+import tools
 
 import xlwt
 
@@ -15,20 +16,20 @@ def main():
     app = QApplication(sys.argv)
 
     #Set font
-    _id = QtGui.QFontDatabase.addApplicationFont(resource_path("./fonts/Roboto/Roboto-Regular.ttf"))
+    _id = QtGui.QFontDatabase.addApplicationFont(tools.resource_path("./fonts/Roboto/Roboto-Regular.ttf"))
 
     if QtGui.QFontDatabase.applicationFontFamilies(_id) == -1:
         print("problem loading font")
         sys.exit(-1)
 
     # Open the qss styles file and read in the css-alike styling code
-    with open(resource_path("./data/style.qss"), 'r') as f:
+    with open(tools.resource_path("./data/style.qss"), 'r') as f:
         style = f.read()
 
         # Set the stylesheet of the application
         app.setStyleSheet(style)
     # print(QStyleFactory.keys())
-    app.setStyle("Fusion")
+    # app.setStyle("Breeze")
 
     #Show Window
     win = Homepage()
@@ -38,15 +39,7 @@ def main():
     sys.exit(app.exec_())
 
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
 
-    return os.path.join(base_path, relative_path)
 
 if __name__ == "__main__":
     main()
