@@ -1,6 +1,6 @@
 * {
   font-family: Roboto;
-  font-size: 24px;
+  font-size: 12px;
   font-weight: Normal;
   background-color: #ffffff;
 }
@@ -8,15 +8,12 @@
 /*-----QWidget-----*/
 QWidget
 {
-    border: 1px solid #DADADA;
-    border-radius: 2px;
     color: #000000;
 }
 
 /*-----QLabel-----*/
 QLabel
 {
-    border: 0px solid white;
 	background-color: transparent;
 	color: #000000;
 
@@ -43,19 +40,6 @@ QPlainTextEdit
 /*-----QPushButton-----*/
 QPushButton
 {
-    border: 1px solid #F3F3F3;
-    border-radius: 2px;
-    padding: 5px, 10px;
-    font-weight: bold;
-    background-color: #F3F3F3;
-    color: #444444;
-}
-QPushButton::hover
-{
-    border: 1px solid #C6C6C6;
-    border-radius: 2px;
-    padding: 5px, 10px;
-    font-weight: bold;
-    background-color: #F7F7F7;
-    color: 333333;
+  background-color: #fff;
+	color: #000000;
 }
