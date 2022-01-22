@@ -3,7 +3,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from cwidgets import CPushButton
 from Form import *
 
 class Homepage(QMainWindow):
@@ -29,11 +28,9 @@ class HomeMenu(QWidget):
         vbox = QVBoxLayout()
         hbox = QHBoxLayout()
 
-        new_order_button = CPushButton("New Order", clicked=lambda: self.new_order_clicked())
+        new_order_button = QPushButton("New Order", clicked=lambda: self.new_order_clicked())
 
-        hbox.addStretch()
         hbox.addWidget(new_order_button)
-        hbox.addStretch()
         vbox.addStretch()
         vbox.addLayout(hbox)
         vbox.addStretch()
