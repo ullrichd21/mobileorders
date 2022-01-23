@@ -8,7 +8,8 @@ from PyQt5.QtMultimedia import *
 from PyQt5.QtMultimediaWidgets import *
 import time
 
-from cwidgets import CPushButton
+from cwidgets import *
+from output import Output
 import tools
 
 
@@ -24,12 +25,13 @@ class OrderForm(QWidget):
 
         # Create Stack
         self.stack = QStackedWidget()
+        self.setAccessibleName("OrderForm")
 
         # Customer Form
-        self.customer_form = CustomerForm(parent=self)
+        self.customer_form = CustomerForm()
 
         # Order Details Form
-        self.order_details_form = OrderDetailsForm()
+        self.order_details_form = OrderDetailsContainer()
 
         self.stack.addWidget(self.customer_form)
         self.stack.addWidget(self.order_details_form)
@@ -41,7 +43,7 @@ class OrderForm(QWidget):
 
     def submit_customer_data(self):
         self.layout.replaceWidget(self.next_button, self.submit_order_button)
-        self.layout.replaceWidget(self.customer_form, self.order_details_form)
+        # self.layout.replaceWidget(self.customer_form, self.order_details_form)
         # self.layout.replaceWidget()
         self.customer_form.deleteLater()
         self.next_button.deleteLater()
@@ -49,14 +51,23 @@ class OrderForm(QWidget):
         self.stack.setCurrentIndex((self.stack.currentIndex() + 1) % self.stack.count())
         # self.customer_data = self.customer_form.get_customer_data()
 
+    def prev_page(self):
+        # print(str((self.stack.currentIndex() + 1) % self.stack.count()) + " " + str(self.stack.currentIndex()))
+
+        self.stack.setCurrentIndex((self.stack.currentIndex() - 1) % self.stack.count())
+
     def next_page(self):
-        print(str((self.stack.currentIndex() + 1) % self.stack.count()) + " " + str(self.stack.currentIndex()))
+        # print(str((self.stack.currentIndex() + 1) % self.stack.count()) + " " + str(self.stack.currentIndex()))
 
         self.stack.setCurrentIndex((self.stack.currentIndex() + 1) % self.stack.count())
 
     def submit_order(self):
-        print({"customer_data": self.customer_data,
-               "order_data": self.order_data})
+        self.order_data = self.order_details_form.collect_order_data()
+
+        data = {"customer_data": self.customer_data,
+                "order_data": self.order_data, "multiple_orders": lambda x: True if len(self.order_data) > 1 else False}
+
+        Output("./data", "test", data)
 
         self.stack.setCurrentIndex(0)
         self.parentWidget().parentWidget().return_home()
@@ -64,16 +75,55 @@ class OrderForm(QWidget):
         #         "order_data" : self.order_details_form.get_order_data()}
 
 
-class OrderDetailsForm(QWidget):
+class OrderDetailsContainer(QWidget):
     def __init__(self, parent=None):
         super(QWidget, self).__init__(parent)
 
-        #Camera stuff
+        self.tabs = QTabWidget()
+        self.tabs.currentChanged.connect(self.set_tab_title)
+        self.create_tab(first_item=True)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.tabs)
+
+        self.setLayout(layout)
+
+    def create_tab(self, first_item=False):
+        item = OrderDetailsForm(tab_parent=self, first_item=first_item)
+        self.tabs.addTab(item, "")
+        self.set_tab_title()
+
+    # def set_tab_title(self, title=""):
+    #     print(self.tabs.currentIndex())
+    #     for index in range(self.tabs.count()):
+    #         self.tabs.setTabText(index, title + " " + str(index + 1))
+
+    def collect_order_data(self):
+        orders = []
+        for index in range(self.tabs.count()):
+            current_tab = self.tabs.widget(index)
+            orders.append(current_tab.get_order_data())
+        return orders
+
+    def set_tab_title(self):
+        print(self.tabs.currentIndex())
+        for index in range(self.tabs.count()):
+            self.tabs.setTabText(index, self.tabs.widget(index).item_input.currentText() + " " + str(index + 1))
+
+
+class OrderDetailsForm(QWidget):
+    def __init__(self, parent=None, first_item=True, tab_parent=None):
+        super(QWidget, self).__init__(parent)
+
+        self.tab_name = "Untitled"
+        self.tab_parent = tab_parent
+        self.first_item = first_item
+
+        # Camera stuff
         self.camera = None
         self.popup = None
         self.viewfinder = None
         self.capture = None
-
 
         # Create a QFormLayout instance
         form_layout = QFormLayout()
@@ -82,7 +132,7 @@ class OrderDetailsForm(QWidget):
                       "Corset": ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"],
                       "Bodice": ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"],
                       "Any Which Way": ["Regular", "Fluffy"],
-                      "Long Skirt": ["Small", "Medium", "Large"],
+                      "Long Skirt": ["One Size"],
                       "Peasant Top": ["Regular", "Fluffy"],
                       "Purse": ["One Size"],
                       "Repair": ["One Size"],
@@ -97,7 +147,9 @@ class OrderDetailsForm(QWidget):
         self.item_details_input = QPlainTextEdit()
         self.size_input = QComboBox()  # Could also make this a dropdown that depends on the item selected.
         self.on_item_changed()
-        self.item_input.currentIndexChanged.connect(lambda: self.on_item_changed())
+        # self.tab_parent.set_tab_title(self.item_input.currentText())
+
+        self.item_input.activated.connect(lambda: self.on_item_changed())
 
         self.notes_input = QPlainTextEdit()
 
@@ -110,11 +162,22 @@ class OrderDetailsForm(QWidget):
         form_layout.addRow("Item Details:", self.item_details_input)
         form_layout.addRow("Size:", self.size_input)
         form_layout.addRow("Additional Notes:", self.notes_input)
-        form_layout.addRow(QLabel(""))
-        self.attach_photo_button = CPushButton("Attach Photo", clicked=lambda: self.attach_photo_pressed())
-        form_layout.addRow(QLabel(""))
 
-        form_layout.addRow(self.attach_photo_button)
+        self.add_new_item = None
+
+        if self.first_item is True:
+            self.add_new_item = CAddItemWidget(add_clicked=lambda: self.add_new_item_pressed())
+        else:
+            self.add_new_item = CAddItemWidget(add_clicked=lambda: self.add_new_item_pressed(),
+                                               remove_clicked=lambda: self.remove_new_item_pressed())
+
+        form_layout.addWidget(self.add_new_item)
+
+        # form_layout.addRow(QLabel(""))
+        # self.attach_photo_button = CPushButton("Attach Photo", clicked=lambda: self.attach_photo_pressed())
+        # form_layout.addRow(QLabel(""))
+
+        # form_layout.addRow(self.attach_photo_button)
         # form_layout.addRow("Description:", self.description_input)
         # form_layout.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
 
@@ -163,9 +226,24 @@ class OrderDetailsForm(QWidget):
         # Create Layout
         self.setLayout(hcenter)
 
+    def add_new_item_pressed(self):
+        self.tab_parent.create_tab(first_item=False)
+        self.tab_parent.tabs.setCurrentIndex(self.tab_parent.tabs.currentIndex() + 1)
+
+    def remove_new_item_pressed(self):
+        self.tab_parent.tabs.setCurrentIndex(self.tab_parent.tabs.currentIndex() - 1)
+        self.tab_parent.tabs.removeTab(self.tab_parent.tabs.currentIndex() + 1)
+
     def on_item_changed(self):
+        self.size_input.setDisabled(False)
         self.size_input.clear()
         self.size_input.addItems(self.items[self.item_input.currentText()])
+
+        if self.size_input.currentText() == "One Size" and self.size_input.count() == 1:
+            self.size_input.setDisabled(True)
+
+        self.tab_name = self.item_input.currentText()
+        self.tab_parent.set_tab_title()
 
     def attach_photo_pressed(self):
         for camera_info in QCameraInfo.availableCameras():
@@ -179,8 +257,6 @@ class OrderDetailsForm(QWidget):
 
         self.camera.start()
 
-
-
         self.popup = QWidget()
         self.popup.setWindowTitle("Take a Photo")
         # self.popup.setGeometry(QRect(100, 100, 400, 200))
@@ -192,7 +268,7 @@ class OrderDetailsForm(QWidget):
         vbox.addStretch()
         vbox.addWidget(self.viewfinder)
 
-        self.capture_button = CPushButton("Capture", clicked = lambda: self.capture_image())
+        self.capture_button = CPushButton("Capture", clicked=lambda: self.capture_image())
 
         vbox.addWidget(self.capture_button)
         vbox.addStretch()
@@ -211,17 +287,19 @@ class OrderDetailsForm(QWidget):
         self.capture = QCameraImageCapture(self.camera)
         self.capture.capture(tools.resource_path("./photos/" + timestamp + ".jpg"))
 
-    def submit_order_data(self):
-        self.parentWidget().parentWidget().order_data = {"item": self.item_input.currentText(),
-                                                         "item_details": self.item_details_input.toPlainText(),
-                                                         "size": self.size_input.currentText(),
-                                                         "notes": self.notes_input.toPlainText()}
+    def get_order_data(self):
+        return {"item": self.item_input.currentText(), "color": self.color_input.text(), "item_details": self.item_details_input.toPlainText(),
+                "size": self.size_input.currentText(), "notes": self.notes_input.toPlainText()}
 
+    def submit_order_data(self):
 
         self.clear_order_data()
-        self.parentWidget().parentWidget().customer_form.clear_customer_data()
 
-        self.parentWidget().parentWidget().submit_order()
+        # print(self.parentWidget().parentWidget().parentWidget().parentWidget().parentWidget().accessibleName())
+
+        # self.parentWidget().parentWidget().parentWidget().parentWidget().parentWidget().customer_form.clear_customer_data()
+
+        self.parentWidget().parentWidget().parentWidget().parentWidget().parentWidget().submit_order()
 
     def clear_order_data(self):
         self.item_input.setCurrentIndex(0)
@@ -231,8 +309,10 @@ class OrderDetailsForm(QWidget):
 
     def go_back(self):
         # print(str((self.stack.currentIndex() + 1) % self.stack.count()) + " " + str(self.stack.currentIndex()))
+        # print(self.parentWidget())
+        # self.parentWidget().setCurrentIndex((self.parentWidget().currentIndex() - 1) % self.parentWidget().count())
+        self.tab_parent.parentWidget().parentWidget().prev_page()
 
-        self.parentWidget().parentWidget().stack.setCurrentIndex((self.parentWidget().parentWidget().stack.currentIndex() - 1) % self.parentWidget().parentWidget().stack.count())
 
 class CustomerForm(QWidget):
     def __init__(self, parent=None):
@@ -265,18 +345,18 @@ class CustomerForm(QWidget):
         # self.address_state_input.lineEdit().setAlignment(Qt.AlignCenter)
         # self.address_state_input.setEditable(False)
         self.address_country_input = QComboBox()
-        self.address_country_input.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        # self.address_country_input.setStyleSheet("QComboBox { combobox-popup: 0; }")
         self.address_country_input.setMaxVisibleItems(10)
-        self.address_country_input.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.address_country_input.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # self.address_country_input.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        # self.address_country_input.setSizePolicy(QSizePolicy., QSizePolicy.Expanding)
         self.address_zip_input = QLineEdit()
 
         self.address_zip_input.setValidator(self.regEx)
 
         with open(tools.resource_path("./data/states.txt")) as states, open(
                 tools.resource_path("./data/countries.txt")) as countries:
-            self.address_state_input.addItems(states.readlines())
-            self.address_country_input.addItems(countries.readlines())
+            self.address_state_input.addItems(states.read().splitlines())
+            self.address_country_input.addItems(countries.read().splitlines())
 
         # submit_button = QPushButton(
         #     "Submit", clicked=lambda: self.submit_clicked())
@@ -297,7 +377,7 @@ class CustomerForm(QWidget):
         # form_layout.addRow("Description:", self.description_input)
         # form_layout.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
 
-        form_layout.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+        # form_layout.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
         form_layout.setVerticalSpacing(10)
 
         # Vbox Layout

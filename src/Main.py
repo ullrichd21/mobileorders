@@ -5,17 +5,19 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from Homepage import Homepage
+import config
 import tools
 
-import xlwt
+# Create config
+global config
 
 
 def main():
 
-    #Create App
+    # Create App
     app = QApplication(sys.argv)
 
-    #Set font
+    # Set font
     _id = QtGui.QFontDatabase.addApplicationFont(tools.resource_path("./fonts/Roboto/Roboto-Regular.ttf"))
 
     if QtGui.QFontDatabase.applicationFontFamilies(_id) == -1:
@@ -30,8 +32,11 @@ def main():
         app.setStyleSheet(style)
     # print(QStyleFactory.keys())
     # app.setStyle("Breeze")
+    config.create_config()
 
-    #Show Window
+    print(config.values)
+
+    # Show Window
     win = Homepage()
     win.setGeometry(400, 400, 400, 300)
 

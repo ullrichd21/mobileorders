@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 
 from cwidgets import CPushButton
 from Form import *
+from settings import Settings
 
 class Homepage(QMainWindow):
     def __init__(self, parent=None):
@@ -38,7 +39,24 @@ class HomeMenu(QWidget):
         vbox.addLayout(hbox)
         vbox.addStretch()
 
+        hbox2 = QHBoxLayout()
+        hbox2.addStretch()
+
+        settings_button = CPushButton("Settings", clicked=lambda: self.settings_clicked())
+        settings_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        hbox2.addWidget(settings_button)
+
+        vbox.addLayout(hbox2)
+
+        self.settings = None
+
+
         self.setLayout(vbox)
 
     def new_order_clicked(self):
         self.parentWidget().parentWidget().next_page()
+
+    def settings_clicked(self):
+        self.settings = Settings()
+        self.settings.show()
